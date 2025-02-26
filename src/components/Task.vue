@@ -1,16 +1,35 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue';
+
 
 const props = defineProps({
   description: String, 
   isCompleted: Boolean
 });
 
+const emit = defineEmits(["update"]);
+
+const localIsCompleted = ref(props.isCompleted);
+const localDescription = ref(props.description);
+
+// 监听任务状态变化
+watch([localIsCompleted, localDescription], ([newIsCompleted, newDescription]) => {
+  emit("update", {
+    description: newDescription,
+    isCompleted: newIsCompleted,
+  });
+});
+
+// 更新描述
+const updateDescription = (event: Event) => {
+  localDescription.value = (event.target as HTMLInputElement).value;
+};
 </script>
 
 <template>
   <div class="task">
-    <input type="checkbox" v-model="props.isCompleted" class="task-checkbox" />
-    <input type="text" class="task-textbox" :value="props.description" />
+    <input type="checkbox" v-model="localIsCompleted" class="task-checkbox" />
+    <input type="text" class="task-textbox" :value="localDescription" @input="updateDescription"/>
   </div>
 </template>
 

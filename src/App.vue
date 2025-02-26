@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, Ref, ref } from 'vue';
+import { onMounted, Ref, ref, watch, watchEffect } from 'vue';
 import Task from './components/Task.vue';
 
 // 禁用右键菜单
@@ -18,9 +18,19 @@ const tasks = ref([
   { description: '任务 3', isCompleted: false },
 ]);
 
+// 更新任务状态
+const updateTask = (index: number, newTask: { description: string; isCompleted: boolean }) => {
+  tasks.value[index] = newTask;
+};
+
 onMounted(() => {
   disableContextMenu();
-  console.log("Hello, Vue3!");
+});
+
+watchEffect(() => {
+  tasks.value.forEach((task) => {
+    console.log(task);
+  });
 });
 
 </script>
@@ -29,7 +39,8 @@ onMounted(() => {
   <main class="container">
     <input type="text" class="title" placeholder="待办事项" :value="title" />
     <div class="task-container">
-      <task v-for="task in tasks" :description="task.description" :is-completed="task.isCompleted" />
+      <task v-for="(task, index) in tasks" :key="index" :description="task.description" :is-completed="task.isCompleted"
+        @update="(newTask) => updateTask(index, newTask)" />
     </div>
   </main>
 </template>
