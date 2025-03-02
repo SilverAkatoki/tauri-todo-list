@@ -24,11 +24,18 @@ watch([localIsCompleted, localDescription], ([newIsCompleted, newDescription]) =
 const updateDescription = (event: Event) => {
   localDescription.value = (event.target as HTMLInputElement).value;
 };
+
+const playSound = () => {
+  const audio = new Audio("../src/assets/click.wav");
+  audio.play();
+  audio.volume = 0.25;
+};
+
 </script>
 
 <template>
   <div class="task">
-    <input type="checkbox" v-model="localIsCompleted" class="task-checkbox" />
+    <input type="checkbox" v-model="localIsCompleted" class="task-checkbox" @click="playSound" />
     <input type="text" class="task-textbox" :value="localDescription" @input="updateDescription"/>
   </div>
 </template>

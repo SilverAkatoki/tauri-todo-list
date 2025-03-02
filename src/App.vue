@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { onMounted, Ref, ref, watch, watchEffect } from 'vue';
+import { onMounted, Ref, ref, watch } from 'vue';
 import Task from './components/Task.vue';
+import { invoke } from '@tauri-apps/api/core';
+
 
 // 禁用右键菜单
 const disableContextMenu = () => {
@@ -12,11 +14,36 @@ const disableContextMenu = () => {
 
 const title: Ref<string> = ref("");
 
-const tasks = ref([
-  { description: '任务 1', isCompleted: false },
-  { description: '任务 2', isCompleted: true },
-  { description: '任务 3', isCompleted: false },
-]);
+const tasks = ref<Array<{ description: string; isCompleted: boolean }>>([]);
+
+const fetchTasks = async () => {
+  try {
+    const data = await invoke("read_data") as { title: string; tasks: Array<{ description: string; is_completed: boolean }> };
+    title.value = data.title;
+    tasks.value = data.tasks.map(task => ({
+      description: task.description,
+      isCompleted: task.is_completed
+    }));
+  } catch (error) {
+    console.error('Failed to fetch tasks:', error);
+  }
+};
+
+const saveData = async () => {
+  try {
+    const data = {
+      title: title.value,
+      tasks: tasks.value.map(task => ({
+        description: task.description,
+        is_completed: task.isCompleted
+      }))
+    };
+    await invoke("write_data", { data });
+    console.log('Tasks saved successfully');
+  } catch (error) {
+    console.error('Failed to save tasks:', error);
+  }
+};
 
 // 更新任务状态
 const updateTask = (index: number, newTask: { description: string; isCompleted: boolean }) => {
@@ -25,19 +52,18 @@ const updateTask = (index: number, newTask: { description: string; isCompleted: 
 
 onMounted(() => {
   disableContextMenu();
+  fetchTasks();
 });
 
-watchEffect(() => {
-  tasks.value.forEach((task) => {
-    console.log(task);
-  });
-});
+watch([title, tasks], () => {
+  saveData();
+}, { deep: true });
 
 </script>
 
 <template>
   <main class="container">
-    <input type="text" class="title" placeholder="待办事项" :value="title" />
+    <input type="text" class="title" placeholder="待办事项" v-model="title" />
     <div class="task-container">
       <task v-for="(task, index) in tasks" :key="index" :description="task.description" :is-completed="task.isCompleted"
         @update="(newTask) => updateTask(index, newTask)" />
