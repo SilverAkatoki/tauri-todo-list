@@ -9,8 +9,8 @@ const props = defineProps({
 
 const emit = defineEmits(["update"]);
 
-const localIsCompleted = ref(props.isCompleted);
-const localDescription = ref(props.description);
+const localDescription = ref<string>(props.description!);
+const localIsCompleted = ref<boolean>(props.isCompleted!);
 
 // 监听任务状态变化
 watch([localIsCompleted, localDescription], ([newIsCompleted, newDescription]) => {
@@ -20,13 +20,9 @@ watch([localIsCompleted, localDescription], ([newIsCompleted, newDescription]) =
   });
 });
 
-// 更新描述
-const updateDescription = (event: Event) => {
-  localDescription.value = (event.target as HTMLInputElement).value;
-};
-
+// 按钮音效
 const playSound = () => {
-  const audio = new Audio("../src/assets/click.wav");
+  const audio = new Audio("/click.wav");
   audio.play();
   audio.volume = 0.25;
 };
@@ -36,7 +32,7 @@ const playSound = () => {
 <template>
   <div class="task">
     <input type="checkbox" v-model="localIsCompleted" class="task-checkbox" @click="playSound" />
-    <input type="text" class="task-textbox" :value="localDescription" @input="updateDescription"/>
+    <input type="text" class="task-textbox" v-model="localDescription"/>
   </div>
 </template>
 

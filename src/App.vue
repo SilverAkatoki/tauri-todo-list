@@ -17,32 +17,23 @@ const title: Ref<string> = ref("");
 const tasks = ref<Array<{ description: string; isCompleted: boolean }>>([]);
 
 const fetchTasks = async () => {
-  try {
-    const data = await invoke("read_data") as { title: string; tasks: Array<{ description: string; is_completed: boolean }> };
-    title.value = data.title;
-    tasks.value = data.tasks.map(task => ({
-      description: task.description,
-      isCompleted: task.is_completed
-    }));
-  } catch (error) {
-    console.error('Failed to fetch tasks:', error);
-  }
+  const data = await invoke("read_data") as { title: string; tasks: Array<{ description: string; is_completed: boolean }> };
+  title.value = data.title;
+  tasks.value = data.tasks.map(task => ({
+    description: task.description,
+    isCompleted: task.is_completed
+  }));
 };
 
 const saveData = async () => {
-  try {
-    const data = {
-      title: title.value,
-      tasks: tasks.value.map(task => ({
-        description: task.description,
-        is_completed: task.isCompleted
-      }))
-    };
-    await invoke("write_data", { data });
-    console.log('Tasks saved successfully');
-  } catch (error) {
-    console.error('Failed to save tasks:', error);
-  }
+  const data = {
+    title: title.value,
+    tasks: tasks.value.map(task => ({
+      description: task.description,
+      is_completed: task.isCompleted
+    }))
+  };
+  await invoke("write_data", { data });
 };
 
 // 更新任务状态
