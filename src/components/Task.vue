@@ -1,24 +1,10 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ModelRef } from 'vue';
 
 
-const props = defineProps({
-  description: String, 
-  isCompleted: Boolean
-});
-
-const emit = defineEmits(["update"]);
-
-const localDescription = ref<string>(props.description!);
-const localIsCompleted = ref<boolean>(props.isCompleted!);
-
-// 监听任务状态变化
-watch([localIsCompleted, localDescription], ([newIsCompleted, newDescription]) => {
-  emit("update", {
-    description: newDescription,
-    isCompleted: newIsCompleted,
-  });
-});
+// 创建双向绑定的模型
+const isCompleted: ModelRef<boolean> = defineModel("isCompleted", { type: Boolean, required: true });
+const description: ModelRef<string> = defineModel("description", { type: String, required: true });
 
 // 按钮音效
 const playSound = () => {
@@ -31,8 +17,8 @@ const playSound = () => {
 
 <template>
   <div class="task">
-    <input type="checkbox" v-model="localIsCompleted" class="task-checkbox" @click="playSound" />
-    <input type="text" class="task-textbox" v-model="localDescription"/>
+    <input type="checkbox" class="task-checkbox" v-model="isCompleted" @click="playSound" />
+    <input type="text" class="task-textbox" v-model="description"/>
   </div>
 </template>
 

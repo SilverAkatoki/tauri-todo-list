@@ -36,11 +36,6 @@ const saveData = async () => {
   await invoke("write_data", { data });
 };
 
-// 更新任务状态
-const updateTask = (index: number, newTask: { description: string; isCompleted: boolean }) => {
-  tasks.value[index] = newTask;
-};
-
 onMounted(() => {
   disableContextMenu();
   fetchTasks();
@@ -56,8 +51,7 @@ watch([title, tasks], () => {
   <main class="container">
     <input type="text" class="title" placeholder="待办事项" v-model="title" />
     <div class="task-container">
-      <task v-for="(task, index) in tasks" :key="index" :description="task.description" :is-completed="task.isCompleted"
-        @update="(newTask) => updateTask(index, newTask)" />
+      <task v-for="(task, index) in tasks" :key="index" v-model:description="task.description" v-model:is-completed="task.isCompleted" />
     </div>
   </main>
 </template>

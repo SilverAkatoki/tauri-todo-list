@@ -31,7 +31,6 @@ impl Default for Data {
             tasks: vec![Task::default(); MAX_TASKS],
         }
     }
-    
 }
 
 pub fn read_data() -> Data {
