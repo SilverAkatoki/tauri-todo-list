@@ -1,24 +1,28 @@
 mod implement;
-mod logger;
 
-use implement::Data;
-use logger::init_log;
+use std::sync::Mutex;
 
+use lazy_static::lazy_static;
+use implement::{Manager, Data};
 
+lazy_static! {
+    static ref TASK_MANAGER: Mutex<Manager> = Mutex::new(Manager::new());
+}
 
 #[tauri::command]
 fn read_data() -> Data {
-    implement::read_data()
+    let manager = TASK_MANAGER.lock().unwrap();
+    manager.read_data()
 }
 
 #[tauri::command]
 fn write_data(data: Data) {
-    implement::write_data(data)
+    let manager = TASK_MANAGER.lock().unwrap();
+    manager.write_data(data)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    init_log();
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .invoke_handler(tauri::generate_handler![read_data, write_data])
