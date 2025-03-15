@@ -45,13 +45,27 @@ watch([title, tasks], () => {
   saveData();
 }, { deep: true });
 
+
+import { getCurrentWindow } from '@tauri-apps/api/window';
+
+const appWindow = getCurrentWindow();
+// TODO 能不能塞进 button 的 Click 事件中
+
 </script>
 
 <template>
   <main class="container">
-    <input type="text" class="title" placeholder="待办事项" v-model="title" />
-    <div class="task-container">
-      <task v-for="(task, index) in tasks" :key="index" v-model:description="task.description" v-model:is-completed="task.isCompleted" />
+    <div class="page-container">
+      <div data-tauri-drag-region class="inner-page-container">
+        <input type="text" class="title" placeholder="待办事项" v-model="title" />
+        <div class="task-container">
+          <task v-for="(task, index) in tasks" :key="index" v-model:description="task.description"
+            v-model:is-completed="task.isCompleted" />
+        </div>
+      </div>
+    </div>
+    <div class="menu-container">
+      <button id="close-button" @click="appWindow.close()" />
     </div>
   </main>
 </template>
@@ -61,6 +75,7 @@ watch([title, tasks], () => {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  image-rendering: pixelated;
 }
 
 #app,
@@ -71,15 +86,50 @@ body {
 
 main.container {
   height: 100%;
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  background: transparent;
+}
+
+div.page-container {
+  height: 100%;
+  width: 90%;
+  background-image: url("/background.png");
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+div.inner-page-container {
+  padding: 5em 2em 0 2em;
+
+  height: 100%;
   width: 100%;
-  margin: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  background-color: #FCFAEB;
   gap: 2em;
   overflow: auto;
+}
+
+button#close-button {
+  position: relative;
+  top: 75%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  background-image: url("/close-button-inactive.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  border: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+button#close-button:active {
+  background-image: url("/close-button-active.png");
 }
 
 div.task-container {

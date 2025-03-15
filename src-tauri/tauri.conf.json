@@ -13,8 +13,11 @@
     "windows": [
       {
         "title": "todo-list",
-        "width": 400,
-        "height": 500
+        "width": 525,
+        "height": 600,
+        "decorations": false,
+        "transparent": true,
+        "shadow": false
       }
     ],
     "security": {

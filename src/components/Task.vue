@@ -29,8 +29,8 @@ div.task {
 
 input[type="checkbox"].task-checkbox {
   appearance: none;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   border: 2px solid gray;
   border-radius: 0;
   background-color: transparent;
@@ -42,9 +42,9 @@ input[type="checkbox"].task-checkbox {
 input[type="checkbox"].task-checkbox:checked::after {
   content: '✔';
   color: green;
-  font-size: 48px;
+  font-size: 36px;
   position: absolute;
-  top: -24px;
+  top: -16px;
   left: -2px;
   pointer-events: none;
 }
@@ -57,14 +57,14 @@ input[type="text"].task-textbox {
   width: calc(100% - 50px);
   background-color: transparent;
   margin-left: 0.5em;
-  font-size: 24px;
+  font-size: 20px;
   border-top: none;
   border-left: none;
   border-right: none;
   border-bottom: 2px solid gray;
   box-sizing: border-box;
   vertical-align: middle;
-  line-height: 24px;
+  line-height: 20px;
   white-space: nowrap;
 }
 
