@@ -56,7 +56,6 @@ watch([title, tasks], () => {
   </main>
 </template>
 
-<style scoped></style>
 <style>
 * {
   margin: 0;
