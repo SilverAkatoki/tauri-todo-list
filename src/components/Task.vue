@@ -21,7 +21,7 @@ const playClickSound = () => {
 
 <template>
   <div class="task">
-    <input type="checkbox" class="task-checkbox" v-model="isCompleted" @click="playClickSound()" />
+    <input type="checkbox" class="task-checkbox" v-model="isCompleted" @click="playClickSound()"/>
     <input type="text" class="task-textbox" :class="{ 'done': isCompleted }" v-model="description" />
   </div>
 </template>

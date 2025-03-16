@@ -4,6 +4,7 @@ import Task from './components/Task.vue';
 import { invoke } from '@tauri-apps/api/core';
 
 
+
 // 禁用右键菜单
 const disableContextMenu = () => {
   document.addEventListener("contextmenu", (e: MouseEvent) => {
@@ -59,9 +60,34 @@ const playSound = () => {
 };
 
 const close = () => {
+  // TODO 优化结构
   playSound();
   setTimeout(() => appWindow.close(), 250);
-}
+};
+
+const removeDoneTasks = () => {
+  const formattedTasks = [];
+  let insertIndex = 0;
+  let taskNumber = tasks.value.length;
+
+  for (let i = 0; i < taskNumber; ++i) {
+    const task = tasks.value[i];
+    if (task.isCompleted || !task.description) {
+      continue;
+    }
+
+    if (insertIndex < taskNumber) {
+      formattedTasks[insertIndex] = task;
+      insertIndex++;
+    }
+  }
+
+  for (let i = insertIndex; i < taskNumber; ++i) {
+    formattedTasks[i] = { description: "", isCompleted: false };
+  }
+
+  tasks.value = formattedTasks;
+};
 
 </script>
 
@@ -77,8 +103,8 @@ const close = () => {
       </div>
     </div>
     <div class="menu-container">
-      <button id="clear-button" @click="close()" />
-      <button id="close-button" @click="close()" />
+      <button id="clear-button" @click="playSound(); removeDoneTasks()" title="清空并排序所有任务"  />
+      <button id="close-button" @click="close()" title="收起写字板" />
     </div>
   </main>
 </template>
