@@ -7,18 +7,22 @@ const isCompleted: ModelRef<boolean> = defineModel("isCompleted", { type: Boolea
 const description: ModelRef<string> = defineModel("description", { type: String, required: true });
 
 // 按钮音效
-const playSound = () => {
-  const audio = new Audio("/click.wav");
-  audio.play();
-  audio.volume = 0.25;
+const playClickSound = () => {
+  const check: HTMLAudioElement = new Audio("/clipboard-check.ogg");
+  const erase: HTMLAudioElement = new Audio("/clipboard-erase.ogg");
+
+  check.volume = 0.5;
+  erase.volume = 0.5;
+
+  ((isCompleted.value) ? erase : check).play();
 };
 
 </script>
 
 <template>
   <div class="task">
-    <input type="checkbox" class="task-checkbox" v-model="isCompleted" @click="playSound" />
-    <input type="text" class="task-textbox" v-model="description"/>
+    <input type="checkbox" class="task-checkbox" v-model="isCompleted" @click="playClickSound()" />
+    <input type="text" class="task-textbox" :class="{ 'done': isCompleted }" v-model="description" />
   </div>
 </template>
 
@@ -47,6 +51,10 @@ input[type="checkbox"].task-checkbox:checked::after {
   top: -16px;
   left: -2px;
   pointer-events: none;
+}
+
+input[type="text"].done {
+  color: green;
 }
 
 input[type="checkbox"].task-checkbox:focus {

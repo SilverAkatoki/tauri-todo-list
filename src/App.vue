@@ -51,6 +51,18 @@ import { getCurrentWindow } from '@tauri-apps/api/window';
 const appWindow = getCurrentWindow();
 // TODO 能不能塞进 button 的 Click 事件中
 
+// 按钮音效
+const playSound = () => {
+  const audio = new Audio("/click.wav");
+  audio.play();
+  audio.volume = 0.25;
+};
+
+const close = () => {
+  playSound();
+  setTimeout(() => appWindow.close(), 250);
+}
+
 </script>
 
 <template>
@@ -65,7 +77,8 @@ const appWindow = getCurrentWindow();
       </div>
     </div>
     <div class="menu-container">
-      <button id="close-button" @click="appWindow.close()" />
+      <button id="clear-button" @click="" />
+      <button id="close-button" @click="close()" />
     </div>
   </main>
 </template>
@@ -130,6 +143,21 @@ button#close-button {
 
 button#close-button:active {
   background-image: url("/close-button-active.png");
+}
+
+button#clear-button {
+  position: relative;
+  top: 75%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  background-image: url("/close-button-inactive.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  border: none;
+  cursor: pointer;
+  user-select: none;
 }
 
 div.task-container {
