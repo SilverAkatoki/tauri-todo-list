@@ -77,7 +77,7 @@ const close = () => {
       </div>
     </div>
     <div class="menu-container">
-      <button id="clear-button" @click="" />
+      <button id="clear-button" @click="close()" />
       <button id="close-button" @click="close()" />
     </div>
   </main>
@@ -126,38 +126,51 @@ div.inner-page-container {
   overflow: auto;
 }
 
-button#close-button {
-  position: relative;
-  top: 75%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+div.menu-container {
+  position: absolute;
+  top: 65%;
+  right: 0;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+}
+
+button#close-button,
+button#clear-button {
   width: 40px;
   height: 40px;
-  background-image: url("/close-button-inactive.png");
   background-size: cover;
   background-repeat: no-repeat;
   border: none;
   cursor: pointer;
   user-select: none;
+}
+
+button#close-button {
+  background-image: url("/close-button-inactive.png");
+}
+
+button#clear-button {
+  background-image: url("/clear-button-inactive.png");
+}
+
+button#clear-button:hover {
+  background-image: url("/clear-button-hover.png");
+}
+
+button#close-button:hover {
+  background-image: url("/close-button-hover.png");
 }
 
 button#close-button:active {
   background-image: url("/close-button-active.png");
 }
 
-button#clear-button {
-  position: relative;
-  top: 75%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 40px;
-  height: 40px;
-  background-image: url("/close-button-inactive.png");
-  background-size: cover;
-  background-repeat: no-repeat;
-  border: none;
-  cursor: pointer;
-  user-select: none;
+button#clear-button:active {
+  background-image: url("/clear-button-active.png");
 }
 
 div.task-container {
