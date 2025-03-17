@@ -69,7 +69,8 @@ input[type="text"].task-textbox {
   border-top: none;
   border-left: none;
   border-right: none;
-  border-bottom: 2px solid gray;
+  border-bottom: none;
+  /* border-bottom: 2px solid gray; */
   box-sizing: border-box;
   vertical-align: middle;
   line-height: 20px;
@@ -78,6 +79,6 @@ input[type="text"].task-textbox {
 
 input[type="text"].task-textbox:focus {
   outline: none;
-  border-bottom: 2px solid black;
+  /* border-bottom: 2px solid black; */
 }
 </style>

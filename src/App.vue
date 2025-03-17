@@ -2,14 +2,12 @@
 import { onMounted, Ref, ref, watch } from 'vue';
 import Task from './components/Task.vue';
 import { invoke } from '@tauri-apps/api/core';
-
-
+import { getCurrentWindow } from '@tauri-apps/api/window';
 
 // 禁用右键菜单
 const disableContextMenu = () => {
   document.addEventListener("contextmenu", (e: MouseEvent) => {
     e.preventDefault();
-    return false;
   }, { capture: true });
 }
 
@@ -18,7 +16,10 @@ const title: Ref<string> = ref("");
 const tasks = ref<Array<{ description: string; isCompleted: boolean }>>([]);
 
 const fetchTasks = async () => {
-  const data = await invoke("read_data") as { title: string; tasks: Array<{ description: string; is_completed: boolean }> };
+  const data = await invoke("read_data") as {
+    title: string;
+    tasks: Array<{ description: string; is_completed: boolean }>
+  };
   title.value = data.title;
   tasks.value = data.tasks.map(task => ({
     description: task.description,
@@ -37,6 +38,11 @@ const saveData = async () => {
   await invoke("write_data", { data });
 };
 
+const removeDoneTasks = async () => {
+  await invoke("remove_done_tasks");
+  fetchTasks();
+};
+
 onMounted(() => {
   disableContextMenu();
   fetchTasks();
@@ -46,48 +52,13 @@ watch([title, tasks], () => {
   saveData();
 }, { deep: true });
 
-
-import { getCurrentWindow } from '@tauri-apps/api/window';
-
-const appWindow = getCurrentWindow();
-// TODO 能不能塞进 button 的 Click 事件中
-
 // 按钮音效
-const playSound = () => {
+const playClickSound = () => {
   const audio = new Audio("/click.wav");
   audio.play();
   audio.volume = 0.25;
 };
 
-const close = () => {
-  // TODO 优化结构
-  playSound();
-  setTimeout(() => appWindow.close(), 250);
-};
-
-const removeDoneTasks = () => {
-  const formattedTasks = [];
-  let insertIndex = 0;
-  let taskNumber = tasks.value.length;
-
-  for (let i = 0; i < taskNumber; ++i) {
-    const task = tasks.value[i];
-    if (task.isCompleted || !task.description) {
-      continue;
-    }
-
-    if (insertIndex < taskNumber) {
-      formattedTasks[insertIndex] = task;
-      insertIndex++;
-    }
-  }
-
-  for (let i = insertIndex; i < taskNumber; ++i) {
-    formattedTasks[i] = { description: "", isCompleted: false };
-  }
-
-  tasks.value = formattedTasks;
-};
 
 </script>
 
@@ -103,8 +74,8 @@ const removeDoneTasks = () => {
       </div>
     </div>
     <div class="menu-container">
-      <button id="clear-button" @click="playSound(); removeDoneTasks()" title="清空并排序所有任务"  />
-      <button id="close-button" @click="close()" title="收起写字板" />
+      <button id="clear-button" @click="playClickSound(); removeDoneTasks()" title="清空并排序所有任务" />
+      <button id="close-button" @click="getCurrentWindow().close()" title="收起写字板" />
     </div>
   </main>
 </template>

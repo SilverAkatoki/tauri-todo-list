@@ -2,8 +2,8 @@ use log::{error, info};
 use serde::{Deserialize, Serialize};
 use simplelog::*;
 use std::fs::File;
-use std::process;
 use std::path::PathBuf;
+use std::process;
 
 const MAX_TASKS: usize = 9;
 const DATA_FILE: &str = "tasks.toml";
@@ -109,5 +109,14 @@ impl Manager {
             }
         };
         data
+    }
+
+    pub fn remove_done_tasks(&self) {
+        let mut data = self.read_data();
+        data.tasks.retain(|task| !task.is_completed && !task.description.is_empty());
+        if data.tasks.len() < MAX_TASKS {
+            data.tasks.extend((0..(MAX_TASKS - data.tasks.len())).map(|_| Task::default()));
+        }
+        self.write_data(data);
     }
 }
