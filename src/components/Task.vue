@@ -8,13 +8,9 @@ const description: ModelRef<string> = defineModel("description", { type: String,
 
 // 按钮音效
 const playClickSound = () => {
-  const check: HTMLAudioElement = new Audio("/clipboard-check.ogg");
-  const erase: HTMLAudioElement = new Audio("/clipboard-erase.ogg");
-
-  check.volume = 0.5;
-  erase.volume = 0.5;
-
-  ((isCompleted.value) ? erase : check).play();
+  const sound = new Audio(isCompleted.value ? '/clipboard-erase.ogg' : '/clipboard-check.ogg');
+  sound.volume = 0.5;
+  sound.play();
 };
 
 </script>
