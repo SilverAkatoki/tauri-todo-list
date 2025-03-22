@@ -62,17 +62,42 @@ const playClickSound = () => {
   audio.volume = 0.25;
 };
 
+const focusedIndex: Ref<number> = ref(-1);
+
+const handleKeyDown = () => {
+  focusedIndex.value =
+    focusedIndex.value >= tasks.value.length - 1
+      ? focusedIndex.value
+      : focusedIndex.value + 1;
+  focusTask();
+};
+
+const handleKeyUp = () => {
+  focusedIndex.value =
+    focusedIndex.value <= 0
+      ? focusedIndex.value
+      : focusedIndex.value - 1;
+  focusTask();
+};
+
+const focusTask = () => {
+  const taskElements = document.querySelectorAll<HTMLInputElement>('.task-textbox');
+  if (focusedIndex.value >= 0 && focusedIndex.value < taskElements.length) {
+    taskElements[focusedIndex.value].focus();
+  }
+};
 
 </script>
 
 <template>
   <main class="container">
     <div class="page-container">
-      <div data-tauri-drag-region class="inner-page-container">
+      <div data-tauri-drag-region class="inner-page-container" @keydown.down.prevent="handleKeyDown"
+        @keydown.up.prevent="handleKeyUp">
         <input type="text" class="title" placeholder="待办事项" v-model="title" />
         <div class="task-container">
-          <task v-for="(task, index) in tasks" :key="index" v-model:description="task.description"
-            v-model:is-completed="task.isCompleted" />
+          <task v-for="(task, index) in tasks" :key="index" :description="task.description"
+            :is-completed="task.isCompleted" @task-focused="focusedIndex = index" />
         </div>
       </div>
     </div>

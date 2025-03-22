@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { emit } from '@tauri-apps/api/event';
 import { ModelRef } from 'vue';
 
 
@@ -13,12 +14,16 @@ const playClickSound = () => {
   sound.play();
 };
 
+const emitFocus = () => {
+  emit('task-focused')
+};
+
 </script>
 
 <template>
   <div class="task">
-    <input type="checkbox" class="task-checkbox" v-model="isCompleted" @click="playClickSound()"/>
-    <input type="text" class="task-textbox" :class="{ 'done': isCompleted }" v-model="description" />
+    <input type="checkbox" class="task-checkbox" v-model="isCompleted" @click="playClickSound()" />
+    <input type="text" class="task-textbox" :class="{ 'done': isCompleted }" v-model="description" @focus="emitFocus" />
   </div>
 </template>
 
