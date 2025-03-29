@@ -23,4 +23,4 @@ dist-ssr
 *.sln
 *.sw?
 
-tasks.toml
+tauri-todo-list

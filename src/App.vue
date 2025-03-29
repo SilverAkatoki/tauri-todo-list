@@ -14,35 +14,45 @@ const disableContextMenu = () => {
 // 需要写的新功能：切换待办文件（用于为项目配置未完成的功能）
 
 
-const title: Ref<string> = ref("");
+const clipboards = ref<Array<{
+  title: string;
+  tasks: Array<{ description: string; isCompleted: boolean }>
+}>>([]);
 
-const tasks = ref<Array<{ description: string; isCompleted: boolean }>>([]);
+const clipboardIndex = ref<number>(0);
 
 const fetchTasks = async () => {
   const data = await invoke("read_data") as {
-    title: string;
-    tasks: Array<{ description: string; is_completed: boolean }>
+    clipboards: Array<{
+      title: string;
+      tasks: Array<{ description: string; is_completed: boolean }>
+    }>
   };
-  title.value = data.title;
-  tasks.value = data.tasks.map(task => ({
-    description: task.description,
-    isCompleted: task.is_completed
+
+  clipboards.value = data.clipboards.map(clipboard => ({
+    title: clipboard.title,
+    tasks: clipboard.tasks.map(task => ({
+      description: task.description,
+      isCompleted: task.is_completed
+    }))
   }));
 };
 
 const saveData = async () => {
   const data = {
-    title: title.value,
-    tasks: tasks.value.map(task => ({
-      description: task.description,
-      is_completed: task.isCompleted
+    clipboards: clipboards.value.map(clipboard => ({
+      title: clipboard.title,
+      tasks: clipboard.tasks.map(task => ({
+        description: task.description,
+        is_completed: task.isCompleted
+      }))
     }))
   };
   await invoke("write_data", { data });
 };
 
-const removeDoneTasks = async () => {
-  await invoke("remove_done_tasks");
+const removeDoneTasks = async (clipboardIndex: number) => {
+  await invoke("remove_done_tasks", { clipboardIndex});
   fetchTasks();
 };
 
@@ -51,7 +61,7 @@ onMounted(() => {
   fetchTasks();
 });
 
-watch([title, tasks], () => {
+watch(clipboards, () => {
   saveData();
 }, { deep: true });
 
@@ -66,7 +76,7 @@ const focusedIndex: Ref<number> = ref(-1);
 
 const handleKeyDown = () => {
   focusedIndex.value =
-    focusedIndex.value >= tasks.value.length - 1
+    focusedIndex.value >= clipboards.value[clipboardIndex.value].tasks.length - 1
       ? focusedIndex.value
       : focusedIndex.value + 1;
   focusTask();
@@ -94,15 +104,20 @@ const focusTask = () => {
     <div class="page-container">
       <div data-tauri-drag-region class="inner-page-container" @keydown.down.prevent="handleKeyDown"
         @keydown.up.prevent="handleKeyUp">
-        <input type="text" class="title" placeholder="待办事项" v-model="title" />
+        <div>
+          <input type="text" class="title" placeholder="待办事项" v-if="clipboards.length > 0"
+            v-model="clipboards[clipboardIndex].title" />
+          <p class="current-tasks-tip"></p>
+        </div>
         <div class="task-container">
-          <task v-for="(task, index) in tasks" :key="index" :description="task.description"
-            :is-completed="task.isCompleted" @task-focused="focusedIndex = index" />
+          <task v-if="clipboards.length > 0" v-for="(task, index) in clipboards[clipboardIndex].tasks" :key="index"
+            v-model:description="task.description"
+            v-model:is-completed="task.isCompleted" @task-focused="focusedIndex = index" />
         </div>
       </div>
     </div>
     <div class="menu-container">
-      <button id="clear-button" @click="playClickSound(); removeDoneTasks()" title="清空并排序所有任务" />
+      <button id="clear-button" @click="playClickSound(); removeDoneTasks(clipboardIndex)" title="清空并排序所有任务" />
       <button id="close-button" @click="getCurrentWindow().close()" title="收起写字板" />
     </div>
   </main>
@@ -234,5 +249,9 @@ input[type="text"].title:focus {
 
 input[type="text"].title:focus::placeholder {
   opacity: 0;
+}
+
+p.current-tasks-tip {
+  margin-top: 2px;
 }
 </style>

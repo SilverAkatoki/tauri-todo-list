@@ -19,9 +19,9 @@ fn write_data(manager: State<'_, Mutex<Manager>>, data: Data) {
 }
 
 #[tauri::command]
-fn remove_done_tasks(manager: State<'_, Mutex<Manager>>) {
+fn remove_done_tasks(manager: State<'_, Mutex<Manager>>, clipboard_index: usize) {
     let manager = manager.lock().unwrap();
-    manager.remove_done_tasks()
+    manager.remove_done_tasks(clipboard_index)
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
