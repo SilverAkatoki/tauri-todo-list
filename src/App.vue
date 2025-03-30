@@ -105,21 +105,22 @@ const focusTask = () => {
           <p class="current-tasks-tip">第 {{ clipboardIndex + 1 }} 个任务组</p>
         </div>
         <div class="outer-task-container">
-            <button class="change-clipboard-button change-clipboard-button__left"
-              @click="playClickSound(); --clipboardIndex" :style="{ visibility: clipboardIndex > 0 ? 'visible' : 'hidden' }"/>
-          <div class="task-container">
-            <task v-if="clipboards.length > 0" v-for="(task, index) in clipboards[clipboardIndex].tasks" :key="index"
-              v-model:description="task.description" v-model:is-completed="task.isCompleted"
-              @task-focused="focusedIndex = index" />
-          </div>
-          <button :style="{ visibility: clipboardIndex < clipboards.length -1 ? 'visible' : 'hidden' }"
+          <button class="change-clipboard-button change-clipboard-button__left"
+            @click="playClickSound(); --clipboardIndex"
+            :style="{ visibility: clipboardIndex > 0 ? 'visible' : 'hidden' }" />
+            <div class="task-container">
+              <task v-if="clipboards.length > 0" v-for="(task, index) in clipboards[clipboardIndex].tasks" :key="index"
+                v-model:description="task.description" v-model:is-completed="task.isCompleted"
+                @task-focused="focusedIndex = index" />
+            </div>
+          <button :style="{ visibility: clipboardIndex < clipboards.length - 1 ? 'visible' : 'hidden' }"
             class="change-clipboard-button change-clipboard-button__right"
             @click="playClickSound(); ++clipboardIndex"></button>
         </div>
       </div>
     </div>
     <div class="menu-container">
-      <button id="clear-button" @click="playClickSound(); removeDoneTasks(clipboardIndex)" title="清空并排序所有任务" />
+      <button id="clear-button" @click="playClickSound(); removeDoneTasks(clipboardIndex)" title="清空并规整当前任务组" />
       <button id="close-button" @click="getCurrentWindow().close()" title="收起写字板" />
     </div>
   </main>
@@ -287,7 +288,7 @@ button.change-clipboard-button {
 }
 
 button.change-clipboard-button__left {
-  background-image: url("/change-clipboard-left-button-inactive.png");
+  background-image: url("/change-clipboard-left-button.png");
 }
 
 button.change-clipboard-button__left:hover {
@@ -296,7 +297,7 @@ button.change-clipboard-button__left:hover {
 
 button.change-clipboard-button__right {
   transform: translateX(-4px) var(--transform-value);
-  background-image: url("/change-clipboard-right-button-inactive.png");
+  background-image: url("/change-clipboard-right-button.png");
 }
 
 button.change-clipboard-button__right:hover {

@@ -1,4 +1,4 @@
-export interface TaskType {
+interface TaskType {
     description: string;
     isCompleted: boolean;
 };
