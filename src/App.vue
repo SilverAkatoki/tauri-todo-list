@@ -102,7 +102,7 @@ const focusTask = () => {
         <div>
           <input type="text" class="title" placeholder="待办事项" v-if="clipboards.length > 0"
             v-model="clipboards[clipboardIndex].title" />
-          <p class="current-tasks-tip"></p>
+          <p class="current-tasks-tip">第 {{ clipboardIndex + 1 }} 个任务组</p>
         </div>
         <div class="outer-task-container">
             <button class="change-clipboard-button change-clipboard-button__left"
@@ -255,6 +255,7 @@ input[type="text"].title:focus::placeholder {
 
 p.current-tasks-tip {
   margin-top: 2px;
+  user-select: none;
 }
 
 div.outer-task-container {
