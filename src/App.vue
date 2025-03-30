@@ -3,38 +3,34 @@ import { onMounted, Ref, ref, watch } from 'vue';
 import Task from './components/Task.vue';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { ClipboardType } from './types.ts';
+
 
 // 禁用右键菜单
 const disableContextMenu = () => {
   document.addEventListener("contextmenu", (e: MouseEvent) => {
     e.preventDefault();
-  }, { capture: true });
-}
+  }, { capture: true }
+  );
+};
 
-// 需要写的新功能：切换待办文件（用于为项目配置未完成的功能）
-
-
-const clipboards = ref<Array<{
-  title: string;
-  tasks: Array<{ description: string; isCompleted: boolean }>
-}>>([]);
-
-const clipboardIndex = ref<number>(0);
+const clipboards: Ref<ClipboardType[]> = ref([]);
+const clipboardIndex: Ref<number> = ref(0);
 
 const fetchTasks = async () => {
   const data = await invoke("read_data") as {
     clipboards: Array<{
       title: string;
-      tasks: Array<{ description: string; is_completed: boolean }>
-    }>
+      tasks: Array<{ description: string; is_completed: boolean }>;
+    }>;
   };
 
   clipboards.value = data.clipboards.map(clipboard => ({
     title: clipboard.title,
     tasks: clipboard.tasks.map(task => ({
       description: task.description,
-      isCompleted: task.is_completed
-    }))
+      isCompleted: task.is_completed,
+    })),
   }));
 };
 
@@ -44,15 +40,15 @@ const saveData = async () => {
       title: clipboard.title,
       tasks: clipboard.tasks.map(task => ({
         description: task.description,
-        is_completed: task.isCompleted
-      }))
-    }))
+        is_completed: task.isCompleted,
+      })),
+    })),
   };
   await invoke("write_data", { data });
 };
 
 const removeDoneTasks = async (clipboardIndex: number) => {
-  await invoke("remove_done_tasks", { clipboardIndex});
+  await invoke("remove_done_tasks", { clipboardIndex });
   fetchTasks();
 };
 
@@ -63,9 +59,9 @@ onMounted(() => {
 
 watch(clipboards, () => {
   saveData();
-}, { deep: true });
+}, { deep: true }
+);
 
-// 按钮音效
 const playClickSound = () => {
   const audio = new Audio("/click.wav");
   audio.play();
@@ -96,7 +92,6 @@ const focusTask = () => {
     taskElements[focusedIndex.value].focus();
   }
 };
-
 </script>
 
 <template>
@@ -109,10 +104,17 @@ const focusTask = () => {
             v-model="clipboards[clipboardIndex].title" />
           <p class="current-tasks-tip"></p>
         </div>
-        <div class="task-container">
-          <task v-if="clipboards.length > 0" v-for="(task, index) in clipboards[clipboardIndex].tasks" :key="index"
-            v-model:description="task.description"
-            v-model:is-completed="task.isCompleted" @task-focused="focusedIndex = index" />
+        <div class="outer-task-container">
+            <button class="change-clipboard-button change-clipboard-button__left"
+              @click="playClickSound(); --clipboardIndex" :style="{ visibility: clipboardIndex > 0 ? 'visible' : 'hidden' }"/>
+          <div class="task-container">
+            <task v-if="clipboards.length > 0" v-for="(task, index) in clipboards[clipboardIndex].tasks" :key="index"
+              v-model:description="task.description" v-model:is-completed="task.isCompleted"
+              @task-focused="focusedIndex = index" />
+          </div>
+          <button :style="{ visibility: clipboardIndex < clipboards.length -1 ? 'visible' : 'hidden' }"
+            class="change-clipboard-button change-clipboard-button__right"
+            @click="playClickSound(); ++clipboardIndex"></button>
         </div>
       </div>
     </div>
@@ -162,7 +164,7 @@ div.inner-page-container {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  gap: 2em;
+  gap: 1em;
   overflow: auto;
 }
 
@@ -253,5 +255,50 @@ input[type="text"].title:focus::placeholder {
 
 p.current-tasks-tip {
   margin-top: 2px;
+}
+
+div.outer-task-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  margin-top: 1em;
+
+}
+
+button.change-clipboard-button {
+  width: 40px;
+  height: 40px;
+
+  /* 让翻页按钮在页面水平中心 */
+  --transform-value: translateY(-20px);
+  transform: var(--transform-value);
+
+  background-color: transparent;
+  background-repeat: no-repeat;
+  background-size: cover;
+  border: none;
+  cursor: pointer;
+  user-select: none;
+
+  transition: background-image 0.1s;
+}
+
+button.change-clipboard-button__left {
+  background-image: url("/change-clipboard-left-button-inactive.png");
+}
+
+button.change-clipboard-button__left:hover {
+  background-image: url("/change-clipboard-left-button-hover.png");
+}
+
+button.change-clipboard-button__right {
+  transform: translateX(-4px) var(--transform-value);
+  background-image: url("/change-clipboard-right-button-inactive.png");
+}
+
+button.change-clipboard-button__right:hover {
+  background-image: url("/change-clipboard-right-button-hover.png");
 }
 </style>
