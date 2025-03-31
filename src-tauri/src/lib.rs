@@ -1,8 +1,8 @@
-mod implement;
+mod clipboard;
 
 use std::sync::Mutex;
 
-use implement::{Manager, Data};
+use clipboard::{Manager, Data};
 use tauri::State;
 
 

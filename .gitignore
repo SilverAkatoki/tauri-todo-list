@@ -24,3 +24,4 @@ dist-ssr
 *.sw?
 
 tauri-todo-list
+develop_image_source
