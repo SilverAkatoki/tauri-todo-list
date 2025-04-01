@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { emit } from '@tauri-apps/api/event';
 import { ModelRef } from 'vue';
 
 
 // 创建双向绑定的模型
 const isCompleted: ModelRef<boolean> = defineModel("isCompleted", { type: Boolean, required: true });
 const description: ModelRef<string> = defineModel("description", { type: String, required: true });
+
+// 用 defineEmits 定义事件出的 emit 函数，不是 tauri 的 emit
+const emit = defineEmits(['task-focused']);
 
 // 按钮音效
 const playClickSound = () => {
@@ -15,7 +17,7 @@ const playClickSound = () => {
 };
 
 const emitFocus = () => {
-  emit('task-focused')
+  emit('task-focused');
 };
 
 </script>
@@ -23,7 +25,8 @@ const emitFocus = () => {
 <template>
   <div class="task">
     <input type="checkbox" class="task-checkbox" v-model="isCompleted" @click="playClickSound()" />
-    <input type="text" class="task-textbox" :class="{ 'done': isCompleted }" v-model="description" @focus="emitFocus" />
+    <input type="text" class="task-textbox" :class="{ 'done': isCompleted }" v-model="description"
+      @focus="emitFocus()" />
   </div>
 </template>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, Ref, ref, watch } from 'vue';
+import { onMounted, onUnmounted, Ref, ref, watch, watchEffect } from 'vue';
 import Task from './components/Task.vue';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
@@ -52,38 +52,30 @@ const removeDoneTasks = async (clipboardIndex: number) => {
   fetchTasks();
 };
 
-onMounted(() => {
-  disableContextMenu();
-  fetchTasks();
-});
-
-watch(clipboards, () => {
-  saveData();
-}, { deep: true }
-);
-
-const playClickSound = () => {
-  const audio = new Audio("/click.wav");
+const playSound = (path: string, volume: number = 1) => {
+  const audio = new Audio(path);
   audio.play();
-  audio.volume = 0.25;
+  audio.volume = volume;
+};
+
+const playPageSound = () => {
+  Math.round(Math.random()) == 1 ? playSound('./open_flip1.ogg', 0.25) : playSound('./open_flip2.ogg', 0.25);
 };
 
 const focusedIndex: Ref<number> = ref(-1);
 
 const handleKeyDown = () => {
-  focusedIndex.value =
-    focusedIndex.value >= clipboards.value[clipboardIndex.value].tasks.length - 1
-      ? focusedIndex.value
-      : focusedIndex.value + 1;
-  focusTask();
+  if (focusedIndex.value < clipboards.value[clipboardIndex.value].tasks.length - 1) {
+    focusedIndex.value += 1;
+    focusTask();
+  }
 };
 
 const handleKeyUp = () => {
-  focusedIndex.value =
-    focusedIndex.value <= 0
-      ? focusedIndex.value
-      : focusedIndex.value - 1;
-  focusTask();
+  if (focusedIndex.value > 0) {
+    focusedIndex.value -= 1;
+    focusTask();
+  }
 };
 
 const focusTask = () => {
@@ -92,36 +84,54 @@ const focusTask = () => {
     taskElements[focusedIndex.value].focus();
   }
 };
+
+onMounted(() => {
+  disableContextMenu();
+  fetchTasks();
+});
+
+onUnmounted(() => {
+  document.removeEventListener("contextmenu", () => { }, { capture: true });
+});
+
+watch(clipboards, () => {
+  saveData();
+}, { deep: true }
+);
+
+watchEffect(() => {
+});
 </script>
 
 <template>
   <main class="container">
     <div class="page-container">
-      <div data-tauri-drag-region class="inner-page-container" @keydown.down.prevent="handleKeyDown"
+      <div class="inner-page-container" @keydown.down.prevent="handleKeyDown"
         @keydown.up.prevent="handleKeyUp">
-        <div>
+        <div class="page__header">
           <input type="text" class="title" placeholder="待办事项" v-if="clipboards.length > 0"
             v-model="clipboards[clipboardIndex].title" />
           <p class="current-tasks-tip">第 {{ clipboardIndex + 1 }} 个任务组</p>
         </div>
         <div class="outer-task-container">
-          <button class="change-clipboard-button change-clipboard-button__left"
-            @click="playClickSound(); --clipboardIndex"
+          <button class="change-clipboard-button change-clipboard-button_left"
+            @click="playPageSound(); --clipboardIndex"
             :style="{ visibility: clipboardIndex > 0 ? 'visible' : 'hidden' }" />
-            <div class="task-container">
-              <task v-if="clipboards.length > 0" v-for="(task, index) in clipboards[clipboardIndex].tasks" :key="index"
-                v-model:description="task.description" v-model:is-completed="task.isCompleted"
-                @task-focused="focusedIndex = index" />
-            </div>
+          <div class="task-container">
+            <task v-if="clipboards.length > 0" v-for="(task, index) in clipboards[clipboardIndex].tasks" :key="index"
+              v-model:description="task.description" v-model:is-completed="task.isCompleted"
+              @task-focused="focusedIndex = index" />
+          </div>
           <button :style="{ visibility: clipboardIndex < clipboards.length - 1 ? 'visible' : 'hidden' }"
-            class="change-clipboard-button change-clipboard-button__right"
-            @click="playClickSound(); ++clipboardIndex"></button>
+            class="change-clipboard-button change-clipboard-button_right"
+            @click="playPageSound(); ++clipboardIndex"></button>
         </div>
       </div>
     </div>
     <div class="menu-container">
-      <button id="clear-button" @click="playClickSound(); removeDoneTasks(clipboardIndex)" title="清空并规整当前任务组" />
-      <button id="close-button" @click="getCurrentWindow().close()" title="收起写字板" />
+      <button id="menu__button--clear" @click="playSound('click.wav', 0.25); removeDoneTasks(clipboardIndex)"
+        title="清空并规整当前任务组" />
+      <button id="menu__button--close" @click="getCurrentWindow().close()" title="收起写字板" />
     </div>
   </main>
 </template>
@@ -181,8 +191,8 @@ div.menu-container {
   gap: 0.5em;
 }
 
-button#close-button,
-button#clear-button {
+button#menu__button--close,
+button#menu__button--clear {
   width: 40px;
   height: 40px;
   background-size: cover;
@@ -192,27 +202,27 @@ button#clear-button {
   user-select: none;
 }
 
-button#close-button {
+button#menu__button--close {
   background-image: url("/close-button-inactive.png");
 }
 
-button#clear-button {
+button#menu__button--clear {
   background-image: url("/clear-button-inactive.png");
 }
 
-button#clear-button:hover {
+button#menu__button--clear:hover {
   background-image: url("/clear-button-hover.png");
 }
 
-button#close-button:hover {
+button#menu__button--close:hover {
   background-image: url("/close-button-hover.png");
 }
 
-button#close-button:active {
+button#menu__button--close:active {
   background-image: url("/close-button-active.png");
 }
 
-button#clear-button:active {
+button#menu__button--clear:active {
   background-image: url("/clear-button-active.png");
 }
 
@@ -287,20 +297,20 @@ button.change-clipboard-button {
   transition: background-image 0.1s;
 }
 
-button.change-clipboard-button__left {
+button.change-clipboard-button_left {
   background-image: url("/change-clipboard-left-button.png");
 }
 
-button.change-clipboard-button__left:hover {
+button.change-clipboard-button_left:hover {
   background-image: url("/change-clipboard-left-button-hover.png");
 }
 
-button.change-clipboard-button__right {
+button.change-clipboard-button_right {
   transform: translateX(-4px) var(--transform-value);
   background-image: url("/change-clipboard-right-button.png");
 }
 
-button.change-clipboard-button__right:hover {
+button.change-clipboard-button_right:hover {
   background-image: url("/change-clipboard-right-button-hover.png");
 }
 </style>
