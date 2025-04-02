@@ -1,8 +1,8 @@
+use log::{error, info};
 use simplelog::*;
 use std::fs::File;
 use std::path::PathBuf;
 use std::process;
-use log::{error, info};
 
 use crate::clipboard::{Data, Task, MAX_TASKS};
 
@@ -46,6 +46,7 @@ impl Manager {
             File::create(&self.log_dir).unwrap(),
         )])
         .unwrap();
+        // 就要用两个 unwarp，反正日志没好，错误处理了也不知道具体是什么
     }
 
     fn get_storage_path() -> std::path::PathBuf {
@@ -55,10 +56,12 @@ impl Manager {
                 process::exit(1);
             })
         } else {
-            std::path::PathBuf::from(std::env::var("LOCALAPPDATA").unwrap_or_else(|e|{
-                error!("Failed to get storage path in LOCALAPPDATA: {e}");
+            // 理论可以不引入库直接用 std::path::PathBuf::from(std::env::var("LOCALAPPDATA") 获取路径
+            // 以后方便跨平台
+            dirs_next::data_local_dir().unwrap_or_else(|| {
+                error!("Failed to get storage path in LOCALAPPDATA");
                 process::exit(1);
-            }))
+            })
         };
         base_dir.join(APP_NAME)
     }
