@@ -3,6 +3,8 @@ interface TaskType {
     isCompleted: boolean;
 };
 
+export type Option<T> = T | null;
+
 export interface ClipboardType {
     title: string;
     tasks: TaskType[];

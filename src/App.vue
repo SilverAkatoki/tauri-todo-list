@@ -59,7 +59,11 @@ const playSound = (path: string, volume: number = 1) => {
 };
 
 const playPageSound = () => {
-  Math.round(Math.random()) == 1 ? playSound('./open_flip1.ogg', 0.25) : playSound('./open_flip2.ogg', 0.25);
+  if (Math.round(Math.random()) == 1) {
+    playSound('./open_flip1.ogg', 0.25);
+  } else {
+    playSound('./open_flip2.ogg', 0.25);
+  }
 };
 
 const focusedIndex: Ref<number> = ref(-1);
@@ -67,21 +71,12 @@ const focusedIndex: Ref<number> = ref(-1);
 const handleKeyDown = () => {
   if (focusedIndex.value < clipboards.value[clipboardIndex.value].tasks.length - 1) {
     focusedIndex.value += 1;
-    focusTask();
   }
 };
 
 const handleKeyUp = () => {
   if (focusedIndex.value > 0) {
     focusedIndex.value -= 1;
-    focusTask();
-  }
-};
-
-const focusTask = () => {
-  const taskElements = document.querySelectorAll<HTMLInputElement>('.task-textbox');
-  if (focusedIndex.value >= 0 && focusedIndex.value < taskElements.length) {
-    taskElements[focusedIndex.value].focus();
   }
 };
 
@@ -106,8 +101,7 @@ watchEffect(() => {
 <template>
   <main class="container">
     <div class="page-container">
-      <div class="inner-page-container" @keydown.down.prevent="handleKeyDown"
-        @keydown.up.prevent="handleKeyUp">
+      <div class="inner-page-container" @keydown.down.prevent="handleKeyDown" @keydown.up.prevent="handleKeyUp">
         <div class="page__header">
           <input type="text" class="title" placeholder="待办事项" v-if="clipboards.length > 0"
             v-model="clipboards[clipboardIndex].title" />
@@ -120,7 +114,7 @@ watchEffect(() => {
           <div class="task-container">
             <task v-if="clipboards.length > 0" v-for="(task, index) in clipboards[clipboardIndex].tasks" :key="index"
               v-model:description="task.description" v-model:is-completed="task.isCompleted"
-              @task-focused="focusedIndex = index" />
+              @task-focused="focusedIndex = index" :has-focused="focusedIndex === index" />
           </div>
           <button :style="{ visibility: clipboardIndex < clipboards.length - 1 ? 'visible' : 'hidden' }"
             class="change-clipboard-button change-clipboard-button_right"
