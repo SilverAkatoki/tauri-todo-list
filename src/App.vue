@@ -103,9 +103,8 @@ watchEffect(() => {
     <div class="page-container">
       <div class="inner-page-container" @keydown.down.prevent="handleKeyDown" @keydown.up.prevent="handleKeyUp">
         <div class="page__header">
-          <input type="text" class="title" placeholder="待办事项" v-if="clipboards.length > 0"
+          <input type="text" class="title" :placeholder="`待办事项 ${clipboardIndex + 1}`" v-if="clipboards.length > 0"
             v-model="clipboards[clipboardIndex].title" />
-          <p class="current-tasks-tip">第 {{ clipboardIndex + 1 }} 个任务组</p>
         </div>
         <div class="outer-task-container">
           <button class="change-clipboard-button change-clipboard-button_left"
@@ -256,11 +255,6 @@ input[type="text"].title:focus {
 
 input[type="text"].title:focus::placeholder {
   opacity: 0;
-}
-
-p.current-tasks-tip {
-  margin-top: 2px;
-  user-select: none;
 }
 
 div.outer-task-container {
