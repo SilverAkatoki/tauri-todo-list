@@ -19,14 +19,10 @@ pub struct Manager {
 
 impl Manager {
     pub fn new() -> Self {
-        let storage_dir = Self::get_storage_path();
+        let storage_dir = Self::get_storage_dir();
 
         if !storage_dir.exists() {
-            std::fs::create_dir_all(&storage_dir).unwrap_or_else(|err| {
-                error!("Failed to create storage directory: {err}");
-                process::exit(1);
-            });
-            info!("Storage directory created at: {}", storage_dir.display());
+            Self::create_storage_folder(&storage_dir);
         }
 
         let log_dir = storage_dir.join(LOG_FILE);
@@ -46,10 +42,10 @@ impl Manager {
             File::create(&self.log_dir).unwrap(),
         )])
         .unwrap();
-        // 就要用两个 unwarp，反正日志没好，错误处理了也不知道具体是什么
+        // 就要用两个 unwrap，反正日志没好，错误处理了也不知道具体是什么
     }
 
-    fn get_storage_path() -> std::path::PathBuf {
+    fn get_storage_dir() -> std::path::PathBuf {
         let base_dir = if cfg!(debug_assertions) {
             std::env::current_dir().unwrap_or_else(|e| {
                 error!("Failed to get storage path in current directory: {e}");
@@ -64,6 +60,14 @@ impl Manager {
             })
         };
         base_dir.join(APP_NAME)
+    }
+
+    fn create_storage_folder(storage_dir: &PathBuf) {
+        std::fs::create_dir_all(&storage_dir).unwrap_or_else(|err| {
+            error!("Failed to create storage directory: {err}");
+            process::exit(1);
+        });
+        info!("Storage directory created at: {}", storage_dir.display());
     }
 
     pub fn write_data(&self, data: Data) {

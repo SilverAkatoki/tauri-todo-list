@@ -1,23 +1,15 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, Ref, ref, watch, watchEffect } from 'vue';
+import { onMounted, onUnmounted, Ref, ref, watch, watchEffect, computed } from 'vue';
 import Task from './components/Task.vue';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { ClipboardType } from './types.ts';
-
-
-// 禁用右键菜单
-const disableContextMenu = () => {
-  document.addEventListener("contextmenu", (e: MouseEvent) => {
-    e.preventDefault();
-  }, { capture: true }
-  );
-};
+import { ClipboardType, TaskType } from './types.ts';
+import { debounce } from './utils.ts';
 
 const clipboards: Ref<ClipboardType[]> = ref([]);
 const clipboardIndex: Ref<number> = ref(0);
 
-const fetchTasks = async () => {
+const fetchData = async () => {
   const data = await invoke("read_data") as {
     clipboards: Array<{
       title: string;
@@ -49,7 +41,7 @@ const saveData = async () => {
 
 const removeDoneTasks = async (clipboardIndex: number) => {
   await invoke("remove_done_tasks", { clipboardIndex });
-  fetchTasks();
+  fetchData();
 };
 
 const playSound = (path: string, volume: number = 1) => {
@@ -59,11 +51,8 @@ const playSound = (path: string, volume: number = 1) => {
 };
 
 const playPageSound = () => {
-  if (Math.round(Math.random()) == 1) {
-    playSound('./open_flip1.ogg', 0.25);
-  } else {
-    playSound('./open_flip2.ogg', 0.25);
-  }
+  const soundPath = (Math.round(Math.random()) == 1) ? './sound/open_flip1.ogg' : './sound/open_flip2.ogg';
+  playSound(soundPath, 0.25);
 };
 
 const focusedIndex: Ref<number> = ref(-1);
@@ -80,49 +69,102 @@ const handleKeyUp = () => {
   }
 };
 
+const changeClipboardMillisecond: number = 75;
+
+const handleKeyLeft = debounce(() => {
+  if (canChangeClipboard.value && clipboardIndex.value > 0) {
+    clipboardIndex.value -= 1;
+  }
+}, changeClipboardMillisecond);
+
+const handleKeyRight = debounce(() => {
+  if (canChangeClipboard.value && clipboardIndex.value < clipboards.value.length - 1) {
+    clipboardIndex.value += 1;
+  }
+}, changeClipboardMillisecond);
+
+const taskRefs = ref<HTMLElement[] | null[]>([]);
+const titleRef = ref<HTMLInputElement | null>(null);
+
+let canChangeClipboard = ref<boolean>(true);
+
+const updateCanChangeClipboard = (e: MouseEvent) => {
+  if (!e) return;
+  const target = e.target as HTMLElement;
+  canChangeClipboard.value = !(target === titleRef.value || target.classList.contains('task-textbox'));
+  if (canChangeClipboard.value) {
+    focusedIndex.value = -1;
+  }
+};
+
+const handleKeyChangeClipboard = (e: KeyboardEvent) => {
+  if (e.key === 'ArrowLeft') {
+    handleKeyLeft();
+  } else if (e.key === 'ArrowRight') {
+    handleKeyRight();
+  }
+};
+
+// 不用计算属性会在未读取文件信息时报错
+const currentClipboardTitle = computed<string>(() => {
+  if (clipboards.value.length === 0) {
+    return "";
+  }
+  return clipboards.value[clipboardIndex.value].title;
+});
+
+// 同上
+const currentClipboardTasks = computed<TaskType[]>(() => {
+  if (clipboards.value.length === 0) {
+    return [];
+  }
+  return clipboards.value[clipboardIndex.value].tasks;
+});
+
 onMounted(() => {
-  disableContextMenu();
-  fetchTasks();
+  fetchData();
+  document.addEventListener("click", updateCanChangeClipboard, { passive: true });
+
+  document.addEventListener('keydown', handleKeyChangeClipboard, { passive: true });
 });
 
 onUnmounted(() => {
-  document.removeEventListener("contextmenu", () => { }, { capture: true });
+  document.removeEventListener("click", updateCanChangeClipboard);
+
+  document.removeEventListener('keydown', handleKeyChangeClipboard);
 });
 
-watch(clipboards, () => {
-  saveData();
-}, { deep: true }
-);
+watch(clipboards, saveData, { deep: true });
+watch(clipboardIndex, playPageSound);
 
-watchEffect(() => {
-});
+watchEffect(() => { });
 </script>
 
 <template>
   <main class="container">
     <div class="page-container">
-      <div class="inner-page-container" @keydown.down.prevent="handleKeyDown" @keydown.up.prevent="handleKeyUp">
+      <!-- @contextmenu.prevent 阻止右键开发者菜单 -->
+      <div class="inner-page-container" @contextmenu.prevent @keydown.up.prevent="handleKeyUp"
+        @keydown.down.prevent="handleKeyDown" @keydown.esc.capture="getCurrentWindow().close()">
         <div class="page__header">
-          <input type="text" class="title" :placeholder="`待办事项 ${clipboardIndex + 1}`" v-if="clipboards.length > 0"
-            v-model="clipboards[clipboardIndex].title" />
+          <input type="text" class="title" :placeholder="`待办事项 ${clipboardIndex + 1}`" v-model="currentClipboardTitle"
+            ref="titleRef" />
         </div>
         <div class="outer-task-container">
-          <button class="change-clipboard-button change-clipboard-button_left"
-            @click="playPageSound(); --clipboardIndex"
+          <button class="change-clipboard-button change-clipboard-button_left" @click="--clipboardIndex"
             :style="{ visibility: clipboardIndex > 0 ? 'visible' : 'hidden' }" />
           <div class="task-container">
-            <task v-if="clipboards.length > 0" v-for="(task, index) in clipboards[clipboardIndex].tasks" :key="index"
-              v-model:description="task.description" v-model:is-completed="task.isCompleted"
-              @task-focused="focusedIndex = index" :has-focused="focusedIndex === index" />
+            <task v-for="(task, index) in currentClipboardTasks" :key="index" v-model:description="task.description"
+              v-model:is-completed="task.isCompleted" @task-focused="focusedIndex = index"
+              :has-focused="focusedIndex === index" ref="taskRefs" />
           </div>
           <button :style="{ visibility: clipboardIndex < clipboards.length - 1 ? 'visible' : 'hidden' }"
-            class="change-clipboard-button change-clipboard-button_right"
-            @click="playPageSound(); ++clipboardIndex"></button>
+            class="change-clipboard-button change-clipboard-button_right" @click="++clipboardIndex"></button>
         </div>
       </div>
     </div>
     <div class="menu-container">
-      <button id="menu__button--clear" @click="playSound('click.wav', 0.25); removeDoneTasks(clipboardIndex)"
+      <button id="menu__button--clear" @click="playSound('./sound/click.wav', 0.25); removeDoneTasks(clipboardIndex)"
         title="清空并规整当前任务组" />
       <button id="menu__button--close" @click="getCurrentWindow().close()" title="收起写字板" />
     </div>
@@ -154,7 +196,7 @@ main.container {
 div.page-container {
   height: 100%;
   width: 90%;
-  background-image: url("/background.png");
+  background-image: url("/img/background.png");
   background-repeat: no-repeat;
   background-size: contain;
 }
@@ -196,27 +238,27 @@ button#menu__button--clear {
 }
 
 button#menu__button--close {
-  background-image: url("/close-button-inactive.png");
+  background-image: url("/img/close-button-inactive.png");
 }
 
 button#menu__button--clear {
-  background-image: url("/clear-button-inactive.png");
+  background-image: url("/img/clear-button-inactive.png");
 }
 
 button#menu__button--clear:hover {
-  background-image: url("/clear-button-hover.png");
+  background-image: url("/img/clear-button-hover.png");
 }
 
 button#menu__button--close:hover {
-  background-image: url("/close-button-hover.png");
+  background-image: url("/img/close-button-hover.png");
 }
 
 button#menu__button--close:active {
-  background-image: url("/close-button-active.png");
+  background-image: url("/img/close-button-active.png");
 }
 
 button#menu__button--clear:active {
-  background-image: url("/clear-button-active.png");
+  background-image: url("/img/clear-button-active.png");
 }
 
 div.task-container {
@@ -283,22 +325,23 @@ button.change-clipboard-button {
   user-select: none;
 
   transition: background-image 0.1s;
+  user-select: none;
 }
 
 button.change-clipboard-button_left {
-  background-image: url("/change-clipboard-left-button.png");
+  background-image: url("/img/change-clipboard-left-button.png");
 }
 
 button.change-clipboard-button_left:hover {
-  background-image: url("/change-clipboard-left-button-hover.png");
+  background-image: url("/img/change-clipboard-left-button-hover.png");
 }
 
 button.change-clipboard-button_right {
   transform: translateX(-4px) var(--transform-value);
-  background-image: url("/change-clipboard-right-button.png");
+  background-image: url("/img/change-clipboard-right-button.png");
 }
 
 button.change-clipboard-button_right:hover {
-  background-image: url("/change-clipboard-right-button-hover.png");
+  background-image: url("/img/change-clipboard-right-button-hover.png");
 }
 </style>

@@ -19,7 +19,7 @@ const emit = defineEmits(["task-focused"]);
 
 // 按钮音效
 const playClickSound = () => {
-  const sound = new Audio(isCompleted.value ? "/clipboard-erase.ogg" : "/clipboard-check.ogg");
+  const sound = new Audio(isCompleted.value ? "/sound/clipboard-erase.ogg" : "/sound/clipboard-check.ogg");
   sound.volume = 0.5;
   sound.play();
 };
@@ -31,17 +31,13 @@ watch(() => props.hasFocused, (hasFocus) => {
   }
 });
 
-const emitFocus = () => {
-  emit("task-focused");
-};
-
 </script>
 
 <template>
   <div class="task">
     <input type="checkbox" class="task-checkbox" v-model="isCompleted" @click="playClickSound()" />
-    <input type="text" class="task-textbox" :class="{ 'done': isCompleted }" v-model="description"
-      @focus="emitFocus()" ref="textboxRef" />
+    <input type="text" class="task-textbox" :class="{ 'done': isCompleted }" v-model="description" @focus="emit('task-focused')"
+      ref="textboxRef" />
   </div>
 </template>
 
