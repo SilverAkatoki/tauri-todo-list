@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, Ref, ref, watch, watchEffect } from 'vue';
-import Task from './components/Task.vue';
 import { invoke } from '@tauri-apps/api/core';
 import { getCurrentWindow } from '@tauri-apps/api/window';
-import { ClipboardType } from './types.ts';
+import { onMounted, onUnmounted, Ref, ref, watch, watchEffect } from 'vue';
+import Task from './components/Task.vue';
+import { ClipboardType, Option } from './types.ts';
 import { debounce } from './utils.ts';
 
 const clipboards: Ref<ClipboardType[]> = ref([]);
@@ -51,7 +51,7 @@ const playSound = (path: string, volume: number = 1) => {
 };
 
 const playPageSound = () => {
-  const soundPath = (Math.round(Math.random()) == 1) ? './sound/open_flip1.ogg' : './sound/open_flip2.ogg';
+  const soundPath: string = (Math.round(Math.random()) === 1) ? './sound/open_flip1.ogg' : './sound/open_flip2.ogg';
   playSound(soundPath, 0.25);
 };
 
@@ -83,13 +83,12 @@ const handleKeyRight = debounce(() => {
   }
 }, changeClipboardMillisecond);
 
-const taskRefs = ref<HTMLElement[] | null[]>([]);
-const titleRef = ref<HTMLInputElement | null>(null);
+const taskRefs = ref<HTMLElement[]>([]);
+const titleRef = ref<Option<HTMLInputElement>>(null);
 
 let canChangeClipboard = ref<boolean>(true);
 
 const updateCanChangeClipboard = (e: MouseEvent) => {
-  if (!e) return;
   const target = e.target as HTMLElement;
   canChangeClipboard.value = !(target === titleRef.value || target.classList.contains('task-textbox'));
   if (canChangeClipboard.value) {
@@ -105,17 +104,27 @@ const handleKeyChangeClipboard = (e: KeyboardEvent) => {
   }
 };
 
+const closeWindow = (flag: boolean) => {
+  if (flag) {
+    getCurrentWindow().close();
+  }
+};
+
 onMounted(() => {
   fetchData();
   document.addEventListener("click", updateCanChangeClipboard, { passive: true });
 
   document.addEventListener('keydown', handleKeyChangeClipboard, { passive: true });
+
+  document.addEventListener('keydown', (e: KeyboardEvent) => closeWindow(e.key === 'Escape'), { passive: true });
 });
 
 onUnmounted(() => {
   document.removeEventListener("click", updateCanChangeClipboard);
 
   document.removeEventListener('keydown', handleKeyChangeClipboard);
+
+  document.removeEventListener('keydown', (e: KeyboardEvent) => closeWindow(e.key === 'Escape'));
 });
 
 watch(clipboards, saveData, { deep: true });
@@ -129,7 +138,7 @@ watchEffect(() => { });
     <div class="page-container">
       <!-- @contextmenu.prevent 阻止右键开发者菜单 -->
       <div class="inner-page-container" @contextmenu.prevent @keydown.up.prevent="handleKeyUp"
-        @keydown.down.prevent="handleKeyDown" @keydown.esc.capture="getCurrentWindow().close()">
+        @keydown.down.prevent="handleKeyDown">
         <div class="page__header">
           <input type="text" class="title" v-if="clipboards.length !== 0" :placeholder="`待办事项 ${clipboardIndex + 1}`"
             v-model="clipboards[clipboardIndex].title" ref="titleRef" />
@@ -150,7 +159,7 @@ watchEffect(() => { });
     <div class="menu-container">
       <button id="menu__button--clear" @click="playSound('./sound/click.wav', 0.25); removeDoneTasks(clipboardIndex)"
         title="清空并规整当前任务组" />
-      <button id="menu__button--close" @click="getCurrentWindow().close()" title="收起写字板" />
+      <button id="menu__button--close" @click="closeWindow(true)" title="收起写字板" />
     </div>
   </main>
 </template>
