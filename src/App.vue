@@ -88,13 +88,12 @@ const titleRef = ref<Option<HTMLInputElement>>(null);
 
 let canChangeClipboard = ref<boolean>(true);
 
-const updateCanChangeClipboard = (e: MouseEvent) => {
-  const target = e.target as HTMLElement;
-  canChangeClipboard.value = !(target === titleRef.value || target.classList.contains('task-textbox'));
-  if (canChangeClipboard.value) {
-    focusedIndex.value = -1;
-  }
-};
+const updateCanChangeClipboard = (target: Option<HTMLElement>) => {
+  canChangeClipboard.value = !(
+    target?.tagName === 'INPUT' &&
+    (target === titleRef.value || target.classList.contains('task-textbox'))
+  );
+}
 
 const handleKeyChangeClipboard = (e: KeyboardEvent) => {
   if (e.key === 'ArrowLeft') {
@@ -104,33 +103,71 @@ const handleKeyChangeClipboard = (e: KeyboardEvent) => {
   }
 };
 
+const handleKeyFocus = (e: KeyboardEvent) => {
+  if (canChangeClipboard.value) {
+    if (e.key === 'ArrowUp') {
+      titleRef.value?.focus();
+    } else if (e.key === 'ArrowDown') {
+      focusedIndex.value = 0;
+      taskRefs.value[focusedIndex.value]?.focus();
+    }
+  }
+};
+
 const closeWindow = (flag: boolean) => {
   if (flag) {
     getCurrentWindow().close();
   }
 };
 
+const handleEscape = (e: KeyboardEvent) => {
+  if (e.key !== 'Escape') return;
+
+  if (currentFocusedTarget.value?.tagName === 'INPUT') {
+    currentFocusedTarget.value.blur();
+  } else if (canChangeClipboard.value) {
+    closeWindow(true);
+  }
+};
+
+const currentFocusedTarget = ref<Option<HTMLElement>>(null);
+
+const handleFocus = (e: FocusEvent) => {
+  currentFocusedTarget.value = e.target as HTMLElement;
+};
+
+const handleBlur = () => {
+  currentFocusedTarget.value = null;
+};
+
 onMounted(() => {
   fetchData();
-  document.addEventListener("click", updateCanChangeClipboard, { passive: true });
 
   document.addEventListener('keydown', handleKeyChangeClipboard, { passive: true });
+  document.addEventListener('keydown', handleEscape, { passive: true });
+  document.addEventListener('keydown', handleKeyFocus, { passive: true });
 
-  document.addEventListener('keydown', (e: KeyboardEvent) => closeWindow(e.key === 'Escape'), { passive: true });
+
+  document.addEventListener('focus', handleFocus, { passive: true, capture: true });
+  document.addEventListener('blur', handleBlur, { passive: true, capture: true });
 });
 
 onUnmounted(() => {
-  document.removeEventListener("click", updateCanChangeClipboard);
+  document.removeEventListener('focus', handleFocus);
+  document.removeEventListener('blur', handleBlur);
 
   document.removeEventListener('keydown', handleKeyChangeClipboard);
-
-  document.removeEventListener('keydown', (e: KeyboardEvent) => closeWindow(e.key === 'Escape'));
+  document.removeEventListener('keydown', handleEscape);
+  document.removeEventListener('keydown', handleKeyFocus);
 });
 
 watch(clipboards, saveData, { deep: true });
 watch(clipboardIndex, playPageSound);
+watch(currentFocusedTarget, () => {
+  updateCanChangeClipboard(currentFocusedTarget.value!);
+}, { immediate: true });
 
-watchEffect(() => { });
+watchEffect(() => { console.log(canChangeClipboard.value) });
 </script>
 
 <template>
