@@ -107,9 +107,6 @@ const handleKeyFocus = (e: KeyboardEvent) => {
   if (canChangeClipboard.value) {
     if (e.key === 'ArrowUp') {
       titleRef.value?.focus();
-    } else if (e.key === 'ArrowDown') {
-      focusedIndex.value = 0;
-      taskRefs.value[focusedIndex.value]?.focus();
     }
   }
 };
