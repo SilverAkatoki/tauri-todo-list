@@ -14,6 +14,10 @@ const props = defineProps<{
 // 不能直接操作 DOM，所以用 ref 创建一个响应式对象
 const textboxRef: Ref<Option<HTMLInputElement>> = ref<Option<HTMLInputElement>>(null);
 
+defineExpose({
+  textboxRef,
+});
+
 // 用 defineEmits 定义事件出的 emit 函数，不是 tauri 的 emit
 const emit = defineEmits(["task-focused"]);
 
@@ -36,8 +40,8 @@ watch(() => props.hasFocused, (hasFocus) => {
 <template>
   <div class="task">
     <input type="checkbox" class="task-checkbox" v-model="isCompleted" @click="playClickSound()" />
-    <input type="text" class="task-textbox" :class="{ 'done': isCompleted }" v-model="description" @focus="emit('task-focused')"
-      ref="textboxRef" />
+    <input type="text" class="task-textbox" :class="{ 'done': isCompleted }" v-model="description"
+      @focus="emit('task-focused')" ref="textboxRef" />
   </div>
 </template>
 

@@ -83,7 +83,7 @@ const handleKeyRight = debounce(() => {
   }
 }, changeClipboardMillisecond);
 
-const taskRefs = ref<HTMLElement[]>([]);
+const taskRefs = ref<Option<InstanceType<typeof Task>[]>>(null);
 const titleRef = ref<Option<HTMLInputElement>>(null);
 
 let canChangeClipboard = ref<boolean>(true);
@@ -107,6 +107,10 @@ const handleKeyFocus = (e: KeyboardEvent) => {
   if (canChangeClipboard.value) {
     if (e.key === 'ArrowUp') {
       titleRef.value?.focus();
+    } else if (e.key === 'ArrowDown') {
+      if (taskRefs.value) {
+        taskRefs.value[0].textboxRef!.focus();
+      }
     }
   }
 };
@@ -164,7 +168,7 @@ watch(currentFocusedTarget, () => {
   updateCanChangeClipboard(currentFocusedTarget.value!);
 }, { immediate: true });
 
-watchEffect(() => { console.log(canChangeClipboard.value) });
+watchEffect(() => { console.log(focusedIndex.value) });
 </script>
 
 <template>
