@@ -163,7 +163,9 @@ onUnmounted(() => {
 });
 
 watch(clipboards, saveData, { deep: true });
+
 watch(clipboardIndex, playPageSound);
+
 watch(currentFocusedTarget, () => {
   updateCanChangeClipboard(currentFocusedTarget.value!);
 }, { immediate: true });
